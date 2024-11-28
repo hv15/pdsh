@@ -90,6 +90,7 @@ static int slurm_process_opt(opt_t *, int opt, char *arg);
 static List job_list = NULL;
 static List partition_list = NULL;
 static List constraint_list = NULL;
+static List cluster_list = NULL;
 
 /*
  *  Export generic pdsh module options
@@ -100,7 +101,6 @@ struct pdsh_module_operations slurm_module_ops = {
     (ModReadWcollF)  mod_slurm_wcoll,
     (ModPostOpF)     NULL
 };
-
 
 /*
  * Export module options
@@ -117,6 +117,10 @@ struct pdsh_module_option slurm_module_options[] =
    },
    { 'C', "feature,...",
      "Limit to SLURM nodes with any of the specified features",
+     DSH | PCP, (optFunc) slurm_process_opt
+   },
+   { 'm', "cluster,...",
+     "Limit to SLURM nodes within any of the specified clusters",
      DSH | PCP, (optFunc) slurm_process_opt
    },
    PDSH_OPT_TABLE_END
@@ -137,12 +141,10 @@ struct pdsh_module pdsh_module_info = {
   &slurm_module_options[0],
 };
 
-
 static int mod_slurm_init (void)
 {
     return (0);
 }
-
 
 static int32_t str2jobid (char *str)
 {
@@ -160,7 +162,6 @@ static int32_t str2jobid (char *str)
     return ((int32_t) jid);
 }
 
-
 static int
 slurm_process_opt(opt_t *pdsh_opts, int opt, char *arg)
 {
@@ -174,6 +175,8 @@ slurm_process_opt(opt_t *pdsh_opts, int opt, char *arg)
     case 'C':
         constraint_list = list_split_append (constraint_list, ",", arg);
         break;
+    case 'm':
+        cluster_list = list_split_append (cluster_list, ",", arg);
     default:
         break;
     }
@@ -192,6 +195,9 @@ mod_slurm_exit(void)
 
     if (constraint_list)
         list_destroy (constraint_list);
+
+    if (cluster_list)
+        list_destroy (cluster_list);
 
     return (0);
 }
@@ -335,7 +341,7 @@ static hostlist_t _slurm_wcoll (List joblist)
         return (NULL);
 
     _slurm_init();
-    if (slurm_load_jobs((time_t) NULL, &msg, SHOW_ALL) < 0)
+    if (slurm_load_jobs((time_t) NULL, &msg, SHOW_ALL & SHOW_FEDERATION) < 0)
         errx ("Unable to contact slurm controller: %s\n",
               slurm_strerror (errno));
 
@@ -385,7 +391,7 @@ static hostlist_t _slurm_wcoll_partition (List partitionlist)
     ListIterator li;
 
     _slurm_init();
-    if (slurm_load_partitions((time_t) NULL, &msg, SHOW_ALL) < 0)
+    if (slurm_load_partitions((time_t) NULL, &msg, SHOW_ALL & SHOW_FEDERATION) < 0)
         errx ("Unable to contact slurm controller: %s\n",
               slurm_strerror (errno));
 
@@ -429,7 +435,7 @@ static hostlist_t _slurm_wcoll_constraint (hostlist_t wl, List constraintlist)
     ListIterator li;
 
     _slurm_init();
-    if (slurm_load_node((time_t) NULL, &msg, SHOW_ALL) < 0)
+    if (slurm_load_node((time_t) NULL, &msg, SHOW_ALL & SHOW_FEDERATION) < 0)
         errx ("Unable to contact slurm controller: %s\n",
               slurm_strerror (errno));
 

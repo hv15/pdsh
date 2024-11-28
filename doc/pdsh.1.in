@@ -289,12 +289,12 @@ environment variable.
 Eliminate target nodes that are considered "down" by libnodeupdown.
 
 .SH "slurm module options"
-The \fBslurm\fI module allows \fBpdsh\fR to target nodes based on 
+The \fBslurm\fR module allows \fBpdsh\fR to target nodes based on 
 currently running SLURM jobs. The \fBslurm\fR module is typically
 called after all other node selection options have been processed, 
 and if no nodes have been selected, the module will attempt to
-read a running jobid from the SLURM_JOBID environment variable 
-(which is set when running under a SLURM allocation). If SLURM_JOBID
+read a running jobid from the \fBSLURM_JOBID\fR environment variable 
+(which is set when running under a SLURM allocation). If \fBSLURM_JOBID\fR
 references an invalid job, it will be silently ignored.
 .TP
 .I "-j jobid[,jobid,...]"
@@ -313,9 +313,15 @@ Restrict selected nodes to those SLURM nodes that have one of the specified
 \fIfeature\fRs active.  This option should be used in combination with other
 node selectors, and filters the resulting list.  Any nodes that do not have
 one of the specified features (or is not a SLURM node) will be excluded.
+.TP
+.I "-m cluster[,cluster,...]"
+Restrict selected nodes to those which are a part of the specified
+\fIcluster\fRs. The module will attempt to read from the \fBSLURM_CLUSTERS\fR
+environment variable. If not explicitly set, only the nodes from the default
+cluster are considered.
 
 .SH "torque module options"
-The \fBtorque\fI module allows \fBpdsh\fR to target nodes based on
+The \fBtorque\fR module allows \fBpdsh\fR to target nodes based on
 currently running Torque/PBS jobs. Similar to the slurm module, the
 \fBtorque\fR module is typically called after all other node
 selection options have been processed, and if no nodes have been
